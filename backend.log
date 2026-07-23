@@ -1,0 +1,86 @@
+2026/07/16 19:46:07 [Init] Starting Rox Khata Ledger Service...
+2026/07/16 19:46:07 [Init] Database connection pool established successfully.
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] POST   /api/v1/accounts          --> rox-khata/internal/ledger.(*LedgerHandler).CreateAccount-fm (3 handlers)
+[GIN-debug] GET    /api/v1/accounts/:id      --> rox-khata/internal/ledger.(*LedgerHandler).GetAccount-fm (3 handlers)
+[GIN-debug] POST   /api/v1/transfers         --> rox-khata/internal/ledger.(*LedgerHandler).Transfer-fm (3 handlers)
+[GIN-debug] GET    /api/v1/entries           --> rox-khata/internal/ledger.(*LedgerHandler).GetStatement-fm (3 handlers)
+[GIN-debug] POST   /api/v1/sync/items        --> rox-khata/internal/ledger.(*LedgerHandler).SyncItem-fm (3 handlers)
+[GIN-debug] POST   /api/v1/sync/banks        --> rox-khata/internal/ledger.(*LedgerHandler).SyncBank-fm (3 handlers)
+[GIN-debug] POST   /api/v1/sync/team-members --> rox-khata/internal/ledger.(*LedgerHandler).SyncTeamMember-fm (3 handlers)
+[GIN-debug] GET    /api/v1/sync/items        --> rox-khata/internal/ledger.(*LedgerHandler).GetItems-fm (3 handlers)
+[GIN-debug] GET    /api/v1/sync/banks        --> rox-khata/internal/ledger.(*LedgerHandler).GetBanks-fm (3 handlers)
+[GIN-debug] GET    /api/v1/sync/team-members --> rox-khata/internal/ledger.(*LedgerHandler).GetTeamMembers-fm (3 handlers)
+[GIN-debug] GET    /api/v1/sync/accounts     --> rox-khata/internal/ledger.(*LedgerHandler).GetAccounts-fm (3 handlers)
+[GIN-debug] POST   /api/v1/erp/products      --> rox-khata/internal/erp.(*ERPHandler).SaveProduct-fm (3 handlers)
+[GIN-debug] GET    /api/v1/erp/dropdowns     --> rox-khata/internal/erp.(*ERPHandler).GetDropdownData-fm (3 handlers)
+[GIN-debug] POST   /api/v1/erp/categories    --> rox-khata/internal/erp.(*ERPHandler).SaveCategory-fm (3 handlers)
+[GIN-debug] POST   /api/v1/erp/brands        --> rox-khata/internal/erp.(*ERPHandler).SaveBrand-fm (3 handlers)
+[GIN-debug] POST   /api/v1/erp/units         --> rox-khata/internal/erp.(*ERPHandler).SaveUnit-fm (3 handlers)
+[GIN-debug] POST   /api/v1/erp/warehouses    --> rox-khata/internal/erp.(*ERPHandler).SaveWarehouse-fm (3 handlers)
+2026/07/16 19:46:07 [Server] Listening on http://localhost:8082 in debug mode
+[GIN] 2026/07/16 - 19:49:08 | 201 |  16.86ms |    192.168.0.38 | POST     "/api/v1/accounts"
+[GIN] 2026/07/16 - 19:49:09 | 400 |   2.36ms |    192.168.0.38 | POST     "/api/v1/transfers"
+[GIN] 2026/07/16 - 19:49:09 | 400 |   1.35ms |    192.168.0.38 | POST     "/api/v1/transfers"
+[GIN] 2026/07/16 - 19:49:09 | 200 |   1.07ms |    192.168.0.38 | GET      "/api/v1/sync/accounts?business_id=03181169320"
+[GIN] 2026/07/16 - 19:49:09 | 200 |   1.47ms |    192.168.0.38 | GET      "/api/v1/sync/items?business_id=03181169320"
+[GIN] 2026/07/16 - 19:49:09 | 200 |   1.93ms |    192.168.0.38 | GET      "/api/v1/sync/banks?business_id=03181169320"
+[GIN] 2026/07/16 - 19:49:09 | 200 |   1.49ms |    192.168.0.38 | GET      "/api/v1/sync/team-members?business_id=03181169320"
+[GIN] 2026/07/16 - 19:52:12 | 201 |  14.29ms |    192.168.0.38 | POST     "/api/v1/accounts"
+[GIN] 2026/07/16 - 19:52:13 | 200 | 999.682µs |    192.168.0.38 | GET      "/api/v1/sync/accounts?business_id=rox_khata_business"
+[GIN] 2026/07/16 - 19:52:13 | 200 |    1.7ms |    192.168.0.38 | GET      "/api/v1/sync/items?business_id=rox_khata_business"
+[GIN] 2026/07/16 - 19:52:13 | 200 |   1.41ms |    192.168.0.38 | GET      "/api/v1/sync/banks?business_id=rox_khata_business"
+[GIN] 2026/07/16 - 19:52:13 | 200 |    1.7ms |    192.168.0.38 | GET      "/api/v1/sync/team-members?business_id=rox_khata_business"
+[GIN] 2026/07/16 - 20:00:13 | 201 |   25.6ms |    192.168.0.38 | POST     "/api/v1/accounts"
+[GIN] 2026/07/16 - 20:00:13 | 201 |  13.02ms |    192.168.0.38 | POST     "/api/v1/accounts"
+[GIN] 2026/07/16 - 20:00:13 | 200 | 603.603µs |    192.168.0.38 | GET      "/api/v1/sync/accounts?business_id=12"
+[GIN] 2026/07/16 - 20:00:13 | 200 | 464.526µs |    192.168.0.38 | GET      "/api/v1/sync/items?business_id=12"
+[GIN] 2026/07/16 - 20:00:13 | 200 | 607.409µs |    192.168.0.38 | GET      "/api/v1/sync/banks?business_id=12"
+[GIN] 2026/07/16 - 20:00:13 | 200 | 459.97µs |    192.168.0.38 | GET      "/api/v1/sync/team-members?business_id=12"
+[GIN] 2026/07/16 - 20:00:35 | 400 |   1.66ms |    192.168.0.38 | POST     "/api/v1/transfers"
+[GIN] 2026/07/16 - 20:00:35 | 200 | 694.273µs |    192.168.0.38 | GET      "/api/v1/sync/accounts?business_id=12"
+[GIN] 2026/07/16 - 20:00:35 | 200 | 465.468µs |    192.168.0.38 | GET      "/api/v1/sync/items?business_id=12"
+[GIN] 2026/07/16 - 20:00:35 | 200 | 459.592µs |    192.168.0.38 | GET      "/api/v1/sync/banks?business_id=12"
+[GIN] 2026/07/16 - 20:00:35 | 200 |   1.05ms |    192.168.0.38 | GET      "/api/v1/sync/team-members?business_id=12"
+[GIN] 2026/07/16 - 20:00:44 | 200 |  69.75ms |    192.168.0.38 | GET      "/api/v1/erp/dropdowns?business_id=12"
+[GIN] 2026/07/16 - 20:01:10 | 201 |  10.31ms |    192.168.0.38 | POST     "/api/v1/erp/warehouses"
+[GIN] 2026/07/16 - 20:01:34 | 201 |   3.69ms |    192.168.0.38 | POST     "/api/v1/erp/warehouses"
+[GIN] 2026/07/16 - 20:03:33 | 200 |  11.08ms |    192.168.0.38 | GET      "/api/v1/erp/dropdowns?business_id=2"
+[GIN] 2026/07/16 - 20:03:54 | 201 |   2.92ms |    192.168.0.38 | POST     "/api/v1/accounts"
+[GIN] 2026/07/16 - 20:03:54 | 200 | 474.174µs |    192.168.0.38 | GET      "/api/v1/sync/accounts?business_id=2"
+[GIN] 2026/07/16 - 20:03:54 | 200 | 536.869µs |    192.168.0.38 | GET      "/api/v1/sync/items?business_id=2"
+[GIN] 2026/07/16 - 20:03:54 | 200 | 478.965µs |    192.168.0.38 | GET      "/api/v1/sync/banks?business_id=2"
+[GIN] 2026/07/16 - 20:03:54 | 200 | 446.117µs |    192.168.0.38 | GET      "/api/v1/sync/team-members?business_id=2"
+[GIN] 2026/07/16 - 20:03:57 | 201 |   1.24ms |    192.168.0.38 | POST     "/api/v1/accounts"
+[GIN] 2026/07/16 - 20:03:57 | 200 | 602.284µs |    192.168.0.38 | GET      "/api/v1/sync/accounts?business_id=2"
+[GIN] 2026/07/16 - 20:03:57 | 200 | 503.785µs |    192.168.0.38 | GET      "/api/v1/sync/items?business_id=2"
+[GIN] 2026/07/16 - 20:03:57 | 200 |   1.31ms |    192.168.0.38 | GET      "/api/v1/sync/banks?business_id=2"
+[GIN] 2026/07/16 - 20:03:58 | 200 | 499.668µs |    192.168.0.38 | GET      "/api/v1/sync/team-members?business_id=2"
+[GIN] 2026/07/16 - 20:15:16 | 201 |   5.44ms |    192.168.0.38 | POST     "/api/v1/accounts"
+[GIN] 2026/07/16 - 20:15:17 | 200 |   1.21ms |    192.168.0.38 | GET      "/api/v1/sync/accounts?business_id=2"
+[GIN] 2026/07/16 - 20:15:17 | 200 | 615.917µs |    192.168.0.38 | GET      "/api/v1/sync/items?business_id=2"
+[GIN] 2026/07/16 - 20:15:17 | 200 | 878.668µs |    192.168.0.38 | GET      "/api/v1/sync/banks?business_id=2"
+[GIN] 2026/07/16 - 20:15:17 | 200 |   1.32ms |    192.168.0.38 | GET      "/api/v1/sync/team-members?business_id=2"
+[GIN] 2026/07/16 - 20:15:32 | 201 |   1.79ms |    192.168.0.38 | POST     "/api/v1/accounts"
+[GIN] 2026/07/16 - 20:15:32 | 200 | 452.37µs |    192.168.0.38 | GET      "/api/v1/sync/accounts?business_id=2"
+[GIN] 2026/07/16 - 20:15:32 | 200 | 495.724µs |    192.168.0.38 | GET      "/api/v1/sync/items?business_id=2"
+[GIN] 2026/07/16 - 20:15:32 | 200 | 374.514µs |    192.168.0.38 | GET      "/api/v1/sync/banks?business_id=2"
+[GIN] 2026/07/16 - 20:15:32 | 200 | 377.711µs |    192.168.0.38 | GET      "/api/v1/sync/team-members?business_id=2"
+[GIN] 2026/07/16 - 20:15:33 | 201 |   1.58ms |    192.168.0.38 | POST     "/api/v1/accounts"
+[GIN] 2026/07/16 - 20:15:33 | 200 | 384.804µs |    192.168.0.38 | GET      "/api/v1/sync/accounts?business_id=2"
+[GIN] 2026/07/16 - 20:15:33 | 200 | 394.386µs |    192.168.0.38 | GET      "/api/v1/sync/items?business_id=2"
+[GIN] 2026/07/16 - 20:15:33 | 200 | 375.143µs |    192.168.0.38 | GET      "/api/v1/sync/banks?business_id=2"
+[GIN] 2026/07/16 - 20:15:33 | 200 | 383.498µs |    192.168.0.38 | GET      "/api/v1/sync/team-members?business_id=2"
+[GIN] 2026/07/16 - 20:15:34 | 201 | 955.08µs |    192.168.0.38 | POST     "/api/v1/accounts"
+[GIN] 2026/07/16 - 20:15:34 | 200 | 418.655µs |    192.168.0.38 | GET      "/api/v1/sync/accounts?business_id=2"
+[GIN] 2026/07/16 - 20:15:34 | 200 | 447.151µs |    192.168.0.38 | GET      "/api/v1/sync/items?business_id=2"
+[GIN] 2026/07/16 - 20:15:34 | 200 | 534.434µs |    192.168.0.38 | GET      "/api/v1/sync/banks?business_id=2"
+[GIN] 2026/07/16 - 20:15:34 | 200 | 414.262µs |    192.168.0.38 | GET      "/api/v1/sync/team-members?business_id=2"
+[GIN] 2026/07/16 - 20:15:39 | 201 |   1.14ms |    192.168.0.38 | POST     "/api/v1/accounts"
+[GIN] 2026/07/16 - 20:15:39 | 200 | 417.236µs |    192.168.0.38 | GET      "/api/v1/sync/accounts?business_id=2"
+[GIN] 2026/07/16 - 20:15:39 | 200 | 407.539µs |    192.168.0.38 | GET      "/api/v1/sync/items?business_id=2"
+[GIN] 2026/07/16 - 20:15:39 | 200 | 423.514µs |    192.168.0.38 | GET      "/api/v1/sync/banks?business_id=2"
+[GIN] 2026/07/16 - 20:15:39 | 200 | 398.287µs |    192.168.0.38 | GET      "/api/v1/sync/team-members?business_id=2"
