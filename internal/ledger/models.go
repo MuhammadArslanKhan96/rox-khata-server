@@ -35,6 +35,13 @@ type CreateAccountRequest struct {
 	PhoneNumber    string  `json:"phone_number"`
 }
 
+// RegisterTenantRequest defines the schema for registering a new tenant.
+type RegisterTenantRequest struct {
+	Phone        string `json:"phone" binding:"required"`
+	Email        string `json:"email" binding:"required"`
+	BusinessName string `json:"business_name" binding:"required"`
+}
+
 // TransferRequest defines the schema for creating a new ledger transfer.
 type TransferRequest struct {
 	BusinessID    string  `json:"business_id" binding:"required,min=1,max=255"`

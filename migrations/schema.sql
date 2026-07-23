@@ -93,9 +93,10 @@ CREATE INDEX IF NOT EXISTS idx_staff_business_id ON staff(business_id);
 --    Top-level business registry keyed by owner phone number
 -- ============================================================
 CREATE TABLE IF NOT EXISTS tenants (
-    phone        VARCHAR(50) PRIMARY KEY,          -- Owner phone = business/tenant ID
+    phone         VARCHAR(50) PRIMARY KEY,          -- Owner phone = business/tenant ID
     business_name VARCHAR(255) NOT NULL DEFAULT 'My Business',
-    created_at   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+    email         VARCHAR(255) UNIQUE,              -- Owner email (must be unique)
+    created_at    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ============================================================
@@ -106,6 +107,7 @@ CREATE TABLE IF NOT EXISTS users (
     id           SERIAL PRIMARY KEY,
     tenant_phone VARCHAR(50) NOT NULL REFERENCES tenants(phone) ON DELETE CASCADE,
     username     VARCHAR(255) NOT NULL,
+    email        VARCHAR(255) UNIQUE,
     phone        VARCHAR(50) NOT NULL UNIQUE,
     role         VARCHAR(50) NOT NULL DEFAULT 'STAFF',
     created_at   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP

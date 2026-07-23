@@ -19,6 +19,7 @@ var (
 // LedgerService interface defines the business operations.
 type LedgerService interface {
 	CreateAccount(ctx context.Context, req CreateAccountRequest) (*LedgerAccount, error)
+	RegisterTenant(ctx context.Context, req RegisterTenantRequest) error
 	GetAccount(ctx context.Context, id int64) (*LedgerAccount, error)
 	Transfer(ctx context.Context, req TransferRequest) (*JournalEntry, error)
 	GetStatement(ctx context.Context, businessID string, accountID int64) ([]JournalEntry, error)
@@ -38,6 +39,10 @@ type ledgerService struct {
 // NewLedgerService creates a new LedgerService.
 func NewLedgerService(repo LedgerRepository) LedgerService {
 	return &ledgerService{repo: repo}
+}
+
+func (s *ledgerService) RegisterTenant(ctx context.Context, req RegisterTenantRequest) error {
+	return s.repo.RegisterTenant(ctx, s.repo.GetPool(), req.Phone, req.Email, req.BusinessName)
 }
 
 func (s *ledgerService) CreateAccount(ctx context.Context, req CreateAccountRequest) (*LedgerAccount, error) {

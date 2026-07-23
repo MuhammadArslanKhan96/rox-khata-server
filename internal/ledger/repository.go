@@ -30,6 +30,7 @@ type LedgerRepository interface {
 	UpsertBank(ctx context.Context, db DBTX, bank BankSyncRequest) error
 	UpsertTeamMember(ctx context.Context, db DBTX, member TeamMemberSyncRequest) error
 	UpsertTenant(ctx context.Context, db DBTX, phone string, name string) error
+	RegisterTenant(ctx context.Context, db DBTX, phone string, email string, name string) error
 	GetItems(ctx context.Context, businessID string) ([]ItemSyncRequest, error)
 	GetBanks(ctx context.Context, businessID string) ([]BankSyncRequest, error)
 	GetTeamMembers(ctx context.Context, businessID string) ([]TeamMemberSyncRequest, error)
@@ -251,6 +252,25 @@ func (r *postgresLedgerRepository) UpsertTenant(ctx context.Context, db DBTX, ph
 		ON CONFLICT (phone) DO NOTHING
 	`
 	_, err = db.Exec(ctx, queryUser, phone)
+	return err
+}
+
+// RegisterTenant creates a new business tenant and owner user, enforcing phone and email uniqueness.
+func (r *postgresLedgerRepository) RegisterTenant(ctx context.Context, db DBTX, phone string, email string, name string) error {
+	queryTenant := `
+		INSERT INTO tenants (phone, business_name, email, created_at)
+		VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+	`
+	_, err := db.Exec(ctx, queryTenant, phone, name, email)
+	if err != nil {
+		return err
+	}
+
+	queryUser := `
+		INSERT INTO users (tenant_phone, username, email, phone, role)
+		VALUES ($1, 'Owner', $2, $1, 'OWNER')
+	`
+	_, err = db.Exec(ctx, queryUser, phone, email)
 	return err
 }
 

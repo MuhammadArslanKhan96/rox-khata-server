@@ -22,6 +22,7 @@ func NewLedgerHandler(service LedgerService) *LedgerHandler {
 func (h *LedgerHandler) RegisterRoutes(router *gin.Engine) {
 	v1 := router.Group("/api/v1")
 	{
+		v1.POST("/tenants/register", h.RegisterTenant)
 		v1.POST("/accounts", h.CreateAccount)
 		v1.GET("/accounts/:id", h.GetAccount)
 		v1.POST("/transfers", h.Transfer)
@@ -36,6 +37,22 @@ func (h *LedgerHandler) RegisterRoutes(router *gin.Engine) {
 		v1.GET("/sync/team-members", h.GetTeamMembers)
 		v1.GET("/sync/accounts", h.GetAccounts)
 	}
+}
+
+// RegisterTenant handles requests to register a new tenant and owner account.
+func (h *LedgerHandler) RegisterTenant(c *gin.Context) {
+	var req RegisterTenantRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.respondWithError(c, http.StatusBadRequest, "Invalid request payload", err.Error())
+		return
+	}
+
+	if err := h.service.RegisterTenant(c.Request.Context(), req); err != nil {
+		h.respondWithError(c, http.StatusConflict, "Registration failed: Phone number or Email already registered", err.Error())
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"status": "success", "message": "Tenant registered successfully", "phone": req.Phone})
 }
 
 // CreateAccount handles requests to create a new ledger account.
