@@ -42,6 +42,22 @@ type RegisterTenantRequest struct {
 	BusinessName string `json:"business_name" binding:"required"`
 }
 
+// LoginRequest defines schema for user authentication.
+type LoginRequest struct {
+	Login    string `json:"login" binding:"required"`
+	Password string `json:"password"`
+}
+
+// LoginResponse defines schema for successful user authentication.
+type LoginResponse struct {
+	Status       string `json:"status"`
+	Message      string `json:"message"`
+	TenantPhone  string `json:"tenant_phone"`
+	BusinessName string `json:"business_name"`
+	Email        string `json:"email"`
+	Role         string `json:"role"`
+}
+
 // TransferRequest defines the schema for creating a new ledger transfer.
 type TransferRequest struct {
 	BusinessID    string  `json:"business_id" binding:"required,min=1,max=255"`

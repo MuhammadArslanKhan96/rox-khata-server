@@ -30,6 +30,7 @@ type LedgerService interface {
 	GetBanks(ctx context.Context, businessID string) ([]BankSyncRequest, error)
 	GetTeamMembers(ctx context.Context, businessID string) ([]TeamMemberSyncRequest, error)
 	GetAccounts(ctx context.Context, businessID string) ([]LedgerAccount, error)
+	LoginTenant(ctx context.Context, req LoginRequest) (*LoginResponse, error)
 }
 
 type ledgerService struct {
@@ -207,4 +208,8 @@ func (s *ledgerService) GetTeamMembers(ctx context.Context, businessID string) (
 
 func (s *ledgerService) GetAccounts(ctx context.Context, businessID string) ([]LedgerAccount, error) {
 	return s.repo.GetAccounts(ctx, businessID)
+}
+
+func (s *ledgerService) LoginTenant(ctx context.Context, req LoginRequest) (*LoginResponse, error) {
+	return s.repo.AuthenticateTenant(ctx, req.Login, req.Password)
 }

@@ -35,6 +35,7 @@ type LedgerRepository interface {
 	GetBanks(ctx context.Context, businessID string) ([]BankSyncRequest, error)
 	GetTeamMembers(ctx context.Context, businessID string) ([]TeamMemberSyncRequest, error)
 	GetAccounts(ctx context.Context, businessID string) ([]LedgerAccount, error)
+	AuthenticateTenant(ctx context.Context, login string, password string) (*LoginResponse, error)
 }
 
 type postgresLedgerRepository struct {
@@ -368,4 +369,25 @@ func (r *postgresLedgerRepository) GetAccounts(ctx context.Context, businessID s
 		return nil, err
 	}
 	return accounts, nil
+}
+
+// AuthenticateTenant authenticates a tenant user by phone or email.
+func (r *postgresLedgerRepository) AuthenticateTenant(ctx context.Context, login string, password string) (*LoginResponse, error) {
+	query := `
+		SELECT t.phone, t.business_name, COALESCE(t.email, ''), 'OWNER'
+		FROM tenants t
+		WHERE t.phone = $1 OR LOWER(t.email) = LOWER($1)
+		LIMIT 1
+	`
+	var res LoginResponse
+	err := r.pool.QueryRow(ctx, query, login).Scan(&res.TenantPhone, &res.BusinessName, &res.Email, &res.Role)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, errors.New("invalid credentials or account does not exist")
+		}
+		return nil, err
+	}
+	res.Status = "success"
+	res.Message = "Authenticated successfully"
+	return &res, nil
 }

@@ -23,6 +23,7 @@ func (h *LedgerHandler) RegisterRoutes(router *gin.Engine) {
 	v1 := router.Group("/api/v1")
 	{
 		v1.POST("/tenants/register", h.RegisterTenant)
+		v1.POST("/auth/login", h.Login)
 		v1.POST("/accounts", h.CreateAccount)
 		v1.GET("/accounts/:id", h.GetAccount)
 		v1.POST("/transfers", h.Transfer)
@@ -37,6 +38,23 @@ func (h *LedgerHandler) RegisterRoutes(router *gin.Engine) {
 		v1.GET("/sync/team-members", h.GetTeamMembers)
 		v1.GET("/sync/accounts", h.GetAccounts)
 	}
+}
+
+// Login handles user authentication requests.
+func (h *LedgerHandler) Login(c *gin.Context) {
+	var req LoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.respondWithError(c, http.StatusBadRequest, "Invalid request payload", err.Error())
+		return
+	}
+
+	res, err := h.service.LoginTenant(c.Request.Context(), req)
+	if err != nil {
+		h.respondWithError(c, http.StatusUnauthorized, "Authentication failed", err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
 }
 
 // RegisterTenant handles requests to register a new tenant and owner account.
