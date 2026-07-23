@@ -43,6 +43,17 @@ type RegisterTenantRequest struct {
 	Password     string `json:"password"`
 }
 
+// VerifyEmailRequest defines schema for email OTP code verification.
+type VerifyEmailRequest struct {
+	Email string `json:"email" binding:"required"`
+	Code  string `json:"code" binding:"required"`
+}
+
+// ResendCodeRequest defines schema for resending OTP verification code.
+type ResendCodeRequest struct {
+	Email string `json:"email" binding:"required"`
+}
+
 // LoginRequest defines schema for user authentication.
 type LoginRequest struct {
 	Login    string `json:"login" binding:"required"`

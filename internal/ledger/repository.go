@@ -2,7 +2,10 @@ package ledger
 
 import (
 	"context"
+	cryptoRand "crypto/rand"
 	"errors"
+	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -30,7 +33,9 @@ type LedgerRepository interface {
 	UpsertBank(ctx context.Context, db DBTX, bank BankSyncRequest) error
 	UpsertTeamMember(ctx context.Context, db DBTX, member TeamMemberSyncRequest) error
 	UpsertTenant(ctx context.Context, db DBTX, phone string, name string) error
-	RegisterTenant(ctx context.Context, db DBTX, phone string, email string, name string, password string) error
+	RegisterTenant(ctx context.Context, db DBTX, phone string, email string, name string, password string) (otpCode string, err error)
+	VerifyTenantEmail(ctx context.Context, email string, code string) error
+	ResendVerificationCode(ctx context.Context, email string) (otpCode string, businessName string, err error)
 	GetItems(ctx context.Context, businessID string) ([]ItemSyncRequest, error)
 	GetBanks(ctx context.Context, businessID string) ([]BankSyncRequest, error)
 	GetTeamMembers(ctx context.Context, businessID string) ([]TeamMemberSyncRequest, error)
@@ -260,27 +265,39 @@ func (r *postgresLedgerRepository) UpsertTenant(ctx context.Context, db DBTX, ph
 	return err
 }
 
+func generateOTP() string {
+	b := make([]byte, 6)
+	_, _ = cryptoRand.Read(b)
+	otp := 100000 + int(b[0])%900000
+	return fmt.Sprintf("%06d", otp)
+}
+
 // RegisterTenant creates a new business tenant and owner user, enforcing phone and email uniqueness.
-func (r *postgresLedgerRepository) RegisterTenant(ctx context.Context, db DBTX, phone string, email string, name string, password string) error {
+func (r *postgresLedgerRepository) RegisterTenant(ctx context.Context, db DBTX, phone string, email string, name string, password string) (string, error) {
 	// Check if phone or email is already registered
 	var existingPhone string
 	checkQuery := `SELECT phone FROM tenants WHERE phone = $1 OR (email IS NOT NULL AND LOWER(email) = LOWER($2)) LIMIT 1`
 	err := db.QueryRow(ctx, checkQuery, phone, email).Scan(&existingPhone)
 	if err == nil {
-		return errors.New("a business with this mobile number or email already exists")
+		return "", errors.New("a business with this mobile number or email already exists")
 	}
 
+	otpCode := generateOTP()
+
 	queryTenant := `
-		INSERT INTO tenants (phone, business_name, email, password_hash, created_at)
-		VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+		INSERT INTO tenants (phone, business_name, email, password_hash, is_verified, verification_code, verification_expires_at, created_at)
+		VALUES ($1, $2, $3, $4, FALSE, $5, CURRENT_TIMESTAMP + INTERVAL '15 minutes', CURRENT_TIMESTAMP)
 		ON CONFLICT (phone) DO UPDATE SET
 			business_name = EXCLUDED.business_name,
 			email = EXCLUDED.email,
-			password_hash = COALESCE(EXCLUDED.password_hash, tenants.password_hash)
+			password_hash = COALESCE(EXCLUDED.password_hash, tenants.password_hash),
+			verification_code = EXCLUDED.verification_code,
+			verification_expires_at = EXCLUDED.verification_expires_at,
+			is_verified = FALSE
 	`
-	_, err = db.Exec(ctx, queryTenant, phone, name, email, password)
+	_, err = db.Exec(ctx, queryTenant, phone, name, email, password, otpCode)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	queryUser := `
@@ -291,7 +308,58 @@ func (r *postgresLedgerRepository) RegisterTenant(ctx context.Context, db DBTX, 
 			password_hash = COALESCE(EXCLUDED.password_hash, users.password_hash)
 	`
 	_, err = db.Exec(ctx, queryUser, phone, email, password)
+	if err != nil {
+		return "", err
+	}
+
+	return otpCode, nil
+}
+
+// VerifyTenantEmail validates the 6-digit OTP code sent to the owner's email address.
+func (r *postgresLedgerRepository) VerifyTenantEmail(ctx context.Context, email string, code string) error {
+	var phone string
+	var expiresAt time.Time
+	query := `
+		SELECT phone, verification_expires_at
+		FROM tenants
+		WHERE LOWER(email) = LOWER($1) AND verification_code = $2 LIMIT 1
+	`
+	err := r.pool.QueryRow(ctx, query, email, code).Scan(&phone, &expiresAt)
+	if err != nil {
+		return errors.New("invalid verification code or email address")
+	}
+
+	if time.Now().After(expiresAt) {
+		return errors.New("verification code has expired. Please request a new code.")
+	}
+
+	updateQuery := `UPDATE tenants SET is_verified = TRUE, verification_code = NULL WHERE phone = $1`
+	_, err = r.pool.Exec(ctx, updateQuery, phone)
 	return err
+}
+
+// ResendVerificationCode generates a new OTP and updates the expiration time for the owner's email.
+func (r *postgresLedgerRepository) ResendVerificationCode(ctx context.Context, email string) (string, string, error) {
+	var phone string
+	var businessName string
+	query := `SELECT phone, business_name FROM tenants WHERE LOWER(email) = LOWER($1) LIMIT 1`
+	err := r.pool.QueryRow(ctx, query, email).Scan(&phone, &businessName)
+	if err != nil {
+		return "", "", errors.New("tenant account not found for this email")
+	}
+
+	otpCode := generateOTP()
+	updateQuery := `
+		UPDATE tenants
+		SET verification_code = $1, verification_expires_at = CURRENT_TIMESTAMP + INTERVAL '15 minutes', is_verified = FALSE
+		WHERE phone = $2
+	`
+	_, err = r.pool.Exec(ctx, updateQuery, otpCode, phone)
+	if err != nil {
+		return "", "", err
+	}
+
+	return otpCode, businessName, nil
 }
 
 func (r *postgresLedgerRepository) GetItems(ctx context.Context, businessID string) ([]ItemSyncRequest, error) {

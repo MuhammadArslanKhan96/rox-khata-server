@@ -23,6 +23,8 @@ func (h *LedgerHandler) RegisterRoutes(router *gin.Engine) {
 	v1 := router.Group("/api/v1")
 	{
 		v1.POST("/tenants/register", h.RegisterTenant)
+		v1.POST("/tenants/verify-email", h.VerifyEmail)
+		v1.POST("/tenants/resend-code", h.ResendCode)
 		v1.POST("/auth/login", h.Login)
 		v1.POST("/accounts", h.CreateAccount)
 		v1.GET("/accounts/:id", h.GetAccount)
@@ -70,7 +72,39 @@ func (h *LedgerHandler) RegisterTenant(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"status": "success", "message": "Tenant registered successfully", "phone": req.Phone})
+	c.JSON(http.StatusCreated, gin.H{"status": "pending_verification", "message": "Tenant registered successfully. Verification code sent to email.", "phone": req.Phone, "email": req.Email})
+}
+
+// VerifyEmail handles email verification OTP checking.
+func (h *LedgerHandler) VerifyEmail(c *gin.Context) {
+	var req VerifyEmailRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.respondWithError(c, http.StatusBadRequest, "Invalid request payload", err.Error())
+		return
+	}
+
+	if err := h.service.VerifyEmail(c.Request.Context(), req); err != nil {
+		h.respondWithError(c, http.StatusBadRequest, "Verification failed", err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Email verified successfully!"})
+}
+
+// ResendCode handles resending the email verification OTP.
+func (h *LedgerHandler) ResendCode(c *gin.Context) {
+	var req ResendCodeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.respondWithError(c, http.StatusBadRequest, "Invalid request payload", err.Error())
+		return
+	}
+
+	if err := h.service.ResendVerificationCode(c.Request.Context(), req); err != nil {
+		h.respondWithError(c, http.StatusBadRequest, "Resend failed", err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "New verification code sent to your email."})
 }
 
 // CreateAccount handles requests to create a new ledger account.

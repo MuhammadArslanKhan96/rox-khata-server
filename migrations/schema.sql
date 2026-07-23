@@ -93,10 +93,13 @@ CREATE INDEX IF NOT EXISTS idx_staff_business_id ON staff(business_id);
 --    Top-level business registry keyed by owner phone number
 -- ============================================================
 CREATE TABLE IF NOT EXISTS tenants (
-    phone         VARCHAR(50) PRIMARY KEY,          -- Owner phone = business/tenant ID
-    business_name VARCHAR(255) NOT NULL DEFAULT 'My Business',
-    email         VARCHAR(255) UNIQUE,              -- Owner email (must be unique)
-    created_at    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+    phone                   VARCHAR(50) PRIMARY KEY,          -- Owner phone = business/tenant ID
+    business_name           VARCHAR(255) NOT NULL DEFAULT 'My Business',
+    email                   VARCHAR(255) UNIQUE,              -- Owner email (must be unique)
+    is_verified             BOOLEAN NOT NULL DEFAULT FALSE,
+    verification_code       VARCHAR(10),
+    verification_expires_at TIMESTAMP WITH TIME ZONE,
+    created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ============================================================

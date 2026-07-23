@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
+
+	"rox-khata/internal/email"
 )
 
 // Standard Business Rule Errors
@@ -20,6 +22,8 @@ var (
 type LedgerService interface {
 	CreateAccount(ctx context.Context, req CreateAccountRequest) (*LedgerAccount, error)
 	RegisterTenant(ctx context.Context, req RegisterTenantRequest) error
+	VerifyEmail(ctx context.Context, req VerifyEmailRequest) error
+	ResendVerificationCode(ctx context.Context, req ResendCodeRequest) error
 	GetAccount(ctx context.Context, id int64) (*LedgerAccount, error)
 	Transfer(ctx context.Context, req TransferRequest) (*JournalEntry, error)
 	GetStatement(ctx context.Context, businessID string, accountID int64) ([]JournalEntry, error)
@@ -43,7 +47,44 @@ func NewLedgerService(repo LedgerRepository) LedgerService {
 }
 
 func (s *ledgerService) RegisterTenant(ctx context.Context, req RegisterTenantRequest) error {
-	return s.repo.RegisterTenant(ctx, s.repo.GetPool(), req.Phone, req.Email, req.BusinessName, req.Password)
+	otpCode, err := s.repo.RegisterTenant(ctx, s.repo.GetPool(), req.Phone, req.Email, req.BusinessName, req.Password)
+	if err != nil {
+		return err
+	}
+
+	// Dispatch email verification OTP asynchronously
+	go func() {
+		mailer := email.NewMailer()
+		if err := mailer.SendVerificationEmail(req.Email, req.BusinessName, otpCode); err != nil {
+			log.Printf("[Warning] Failed to send verification email to %s: %v", req.Email, err)
+		} else {
+			log.Printf("[Email Success] Verification OTP [%s] sent to %s", otpCode, req.Email)
+		}
+	}()
+
+	return nil
+}
+
+func (s *ledgerService) VerifyEmail(ctx context.Context, req VerifyEmailRequest) error {
+	return s.repo.VerifyTenantEmail(ctx, req.Email, req.Code)
+}
+
+func (s *ledgerService) ResendVerificationCode(ctx context.Context, req ResendCodeRequest) error {
+	otpCode, businessName, err := s.repo.ResendVerificationCode(ctx, req.Email)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		mailer := email.NewMailer()
+		if err := mailer.SendVerificationEmail(req.Email, businessName, otpCode); err != nil {
+			log.Printf("[Warning] Failed to resend verification email to %s: %v", req.Email, err)
+		} else {
+			log.Printf("[Email Success] Resent Verification OTP [%s] to %s", otpCode, req.Email)
+		}
+	}()
+
+	return nil
 }
 
 func (s *ledgerService) CreateAccount(ctx context.Context, req CreateAccountRequest) (*LedgerAccount, error) {
