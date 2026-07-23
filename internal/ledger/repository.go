@@ -236,10 +236,14 @@ func (r *postgresLedgerRepository) UpsertTeamMember(ctx context.Context, db DBTX
 
 // UpsertTenant inserts or ignores a tenant and registers their owner user in the database.
 func (r *postgresLedgerRepository) UpsertTenant(ctx context.Context, db DBTX, phone string, name string) error {
+	if name == "" {
+		name = "My Business"
+	}
 	queryTenant := `
 		INSERT INTO tenants (phone, business_name, created_at)
 		VALUES ($1, $2, CURRENT_TIMESTAMP)
-		ON CONFLICT (phone) DO NOTHING
+		ON CONFLICT (phone) DO UPDATE SET
+			business_name = CASE WHEN tenants.business_name = 'My Business' AND EXCLUDED.business_name != 'My Business' THEN EXCLUDED.business_name ELSE tenants.business_name END
 	`
 	_, err := db.Exec(ctx, queryTenant, phone, name)
 	if err != nil {
@@ -260,6 +264,9 @@ func (r *postgresLedgerRepository) RegisterTenant(ctx context.Context, db DBTX, 
 	queryTenant := `
 		INSERT INTO tenants (phone, business_name, email, created_at)
 		VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+		ON CONFLICT (phone) DO UPDATE SET
+			business_name = EXCLUDED.business_name,
+			email = EXCLUDED.email
 	`
 	_, err := db.Exec(ctx, queryTenant, phone, name, email)
 	if err != nil {
@@ -269,6 +276,7 @@ func (r *postgresLedgerRepository) RegisterTenant(ctx context.Context, db DBTX, 
 	queryUser := `
 		INSERT INTO users (tenant_phone, username, email, phone, role)
 		VALUES ($1, 'Owner', $2, $1, 'OWNER')
+		ON CONFLICT (phone) DO NOTHING
 	`
 	_, err = db.Exec(ctx, queryUser, phone, email)
 	return err
