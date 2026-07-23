@@ -30,7 +30,7 @@ type LedgerRepository interface {
 	UpsertBank(ctx context.Context, db DBTX, bank BankSyncRequest) error
 	UpsertTeamMember(ctx context.Context, db DBTX, member TeamMemberSyncRequest) error
 	UpsertTenant(ctx context.Context, db DBTX, phone string, name string) error
-	RegisterTenant(ctx context.Context, db DBTX, phone string, email string, name string) error
+	RegisterTenant(ctx context.Context, db DBTX, phone string, email string, name string, password string) error
 	GetItems(ctx context.Context, businessID string) ([]ItemSyncRequest, error)
 	GetBanks(ctx context.Context, businessID string) ([]BankSyncRequest, error)
 	GetTeamMembers(ctx context.Context, businessID string) ([]TeamMemberSyncRequest, error)
@@ -261,25 +261,36 @@ func (r *postgresLedgerRepository) UpsertTenant(ctx context.Context, db DBTX, ph
 }
 
 // RegisterTenant creates a new business tenant and owner user, enforcing phone and email uniqueness.
-func (r *postgresLedgerRepository) RegisterTenant(ctx context.Context, db DBTX, phone string, email string, name string) error {
+func (r *postgresLedgerRepository) RegisterTenant(ctx context.Context, db DBTX, phone string, email string, name string, password string) error {
+	// Check if phone or email is already registered
+	var existingPhone string
+	checkQuery := `SELECT phone FROM tenants WHERE phone = $1 OR (email IS NOT NULL AND LOWER(email) = LOWER($2)) LIMIT 1`
+	err := db.QueryRow(ctx, checkQuery, phone, email).Scan(&existingPhone)
+	if err == nil {
+		return errors.New("a business with this mobile number or email already exists")
+	}
+
 	queryTenant := `
-		INSERT INTO tenants (phone, business_name, email, created_at)
-		VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+		INSERT INTO tenants (phone, business_name, email, password_hash, created_at)
+		VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
 		ON CONFLICT (phone) DO UPDATE SET
 			business_name = EXCLUDED.business_name,
-			email = EXCLUDED.email
+			email = EXCLUDED.email,
+			password_hash = COALESCE(EXCLUDED.password_hash, tenants.password_hash)
 	`
-	_, err := db.Exec(ctx, queryTenant, phone, name, email)
+	_, err = db.Exec(ctx, queryTenant, phone, name, email, password)
 	if err != nil {
 		return err
 	}
 
 	queryUser := `
-		INSERT INTO users (tenant_phone, username, email, phone, role)
-		VALUES ($1, 'Owner', $2, $1, 'OWNER')
-		ON CONFLICT (phone) DO NOTHING
+		INSERT INTO users (tenant_phone, username, email, phone, password_hash, role)
+		VALUES ($1, 'Owner', $2, $1, $3, 'OWNER')
+		ON CONFLICT (phone) DO UPDATE SET
+			email = EXCLUDED.email,
+			password_hash = COALESCE(EXCLUDED.password_hash, users.password_hash)
 	`
-	_, err = db.Exec(ctx, queryUser, phone, email)
+	_, err = db.Exec(ctx, queryUser, phone, email, password)
 	return err
 }
 
@@ -374,19 +385,25 @@ func (r *postgresLedgerRepository) GetAccounts(ctx context.Context, businessID s
 // AuthenticateTenant authenticates a tenant user by phone or email.
 func (r *postgresLedgerRepository) AuthenticateTenant(ctx context.Context, login string, password string) (*LoginResponse, error) {
 	query := `
-		SELECT t.phone, t.business_name, COALESCE(t.email, ''), 'OWNER'
+		SELECT t.phone, t.business_name, COALESCE(t.email, ''), COALESCE(t.password_hash, ''), 'OWNER'
 		FROM tenants t
-		WHERE t.phone = $1 OR LOWER(t.email) = LOWER($1)
+		WHERE t.phone = $1 OR (t.email IS NOT NULL AND LOWER(t.email) = LOWER($1))
 		LIMIT 1
 	`
 	var res LoginResponse
-	err := r.pool.QueryRow(ctx, query, login).Scan(&res.TenantPhone, &res.BusinessName, &res.Email, &res.Role)
+	var storedPwd string
+	err := r.pool.QueryRow(ctx, query, login).Scan(&res.TenantPhone, &res.BusinessName, &res.Email, &storedPwd, &res.Role)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, errors.New("invalid credentials or account does not exist")
 		}
 		return nil, err
 	}
+
+	if storedPwd != "" && password != "" && storedPwd != password {
+		return nil, errors.New("incorrect password")
+	}
+
 	res.Status = "success"
 	res.Message = "Authenticated successfully"
 	return &res, nil

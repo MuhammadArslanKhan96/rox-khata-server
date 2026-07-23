@@ -40,6 +40,7 @@ type RegisterTenantRequest struct {
 	Phone        string `json:"phone" binding:"required"`
 	Email        string `json:"email" binding:"required"`
 	BusinessName string `json:"business_name" binding:"required"`
+	Password     string `json:"password"`
 }
 
 // LoginRequest defines schema for user authentication.

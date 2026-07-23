@@ -43,7 +43,7 @@ func NewLedgerService(repo LedgerRepository) LedgerService {
 }
 
 func (s *ledgerService) RegisterTenant(ctx context.Context, req RegisterTenantRequest) error {
-	return s.repo.RegisterTenant(ctx, s.repo.GetPool(), req.Phone, req.Email, req.BusinessName)
+	return s.repo.RegisterTenant(ctx, s.repo.GetPool(), req.Phone, req.Email, req.BusinessName, req.Password)
 }
 
 func (s *ledgerService) CreateAccount(ctx context.Context, req CreateAccountRequest) (*LedgerAccount, error) {
